@@ -1,6 +1,6 @@
 {
   "name": "@miden-sdk/miden-turnkey-react",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "React hook for Miden Turnkey integration",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

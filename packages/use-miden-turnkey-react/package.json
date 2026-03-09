@@ -1,6 +1,6 @@
 {
   "name": "@miden-sdk/miden-turnkey-react",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "React hook for Miden Turnkey integration",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -37,6 +37,7 @@
   "peerDependencies": {
     "@miden-sdk/miden-sdk": "^0.13.1",
     "@miden-sdk/miden-turnkey": "^1.0.3",
+    "@miden-sdk/react": "^0.13.3",
     "@turnkey/core": "^1.8.2",
     "@turnkey/react-wallet-kit": "^1.6.2",
     "@turnkey/sdk-browser": "^5.13.4",
@@ -45,6 +46,7 @@
   "devDependencies": {
     "@miden-sdk/miden-sdk": "^0.13.1",
     "@miden-sdk/miden-turnkey": "link:../../",
+    "@miden-sdk/react": "^0.13.3",
     "@turnkey/core": "^1.8.2",
     "@turnkey/react-wallet-kit": "^1.6.2",
     "@turnkey/sdk-browser": "^5.13.4",

@@ -1007,10 +1007,10 @@
   dependencies:
     lottie-web "^5.12.2"
 
-"@miden-sdk/miden-sdk@^0.13.0":
-  version "0.13.0"
-  resolved "https://registry.yarnpkg.com/@miden-sdk/miden-sdk/-/miden-sdk-0.13.0.tgz#df7f639f90931d279761a62bb513374366d755e4"
-  integrity sha512-N0qUCZW9Dvk3Oqj37IrGmm0b0v3Nq5qHsX3BtQIzZIwDXKXKPBxy/0lO40oCwDtwI8AfriZQyMLbJR81Fo4Vpg==
+"@miden-sdk/miden-sdk@^0.13.1":
+  version "0.13.2"
+  resolved "https://registry.yarnpkg.com/@miden-sdk/miden-sdk/-/miden-sdk-0.13.2.tgz#d5e58062511c905c312accb768c74853194e4d0e"
+  integrity sha512-XfkYBHZmz+KhgMSGyrtHhUBtlVtyxrHMIemKdKzBx+3H3ijnEvemGo/26MQh6j/bFqB2ikOp8UZm+CW2tJsVvQ==
   dependencies:
     "@rollup/plugin-typescript" "^12.3.0"
     dexie "^4.0.1"
@@ -1030,10 +1030,10 @@
   version "0.0.0"
   uid ""
 
-"@miden-sdk/react@^0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@miden-sdk/react/-/react-0.13.2.tgz#bad9b88449bb7ca1a2e55274b360b1e729a409fe"
-  integrity sha512-78i3/5YUUwitqvJA02HVXZ61RXEOyaiRsm1agVUtOblOmazuIgMEW4P3gdlX9YUiGr06l9O+Rw1ol5FZCOJTXQ==
+"@miden-sdk/react@^0.13.3":
+  version "0.13.3"
+  resolved "https://registry.yarnpkg.com/@miden-sdk/react/-/react-0.13.3.tgz#943f560709053f78d2914912571780e4690609f7"
+  integrity sha512-jJ/j61C/53bsDXi80AllZSygoGd5+GSFRFLSMHLIto3zO9IiQ7JTbmHOtKLp7qTh+VozLyE0wE/pTsWYoVtKQg==
   dependencies:
     zustand "^5.0.0"
 

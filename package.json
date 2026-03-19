@@ -1,7 +1,7 @@
 {
   "name": "@miden-sdk/miden-turnkey",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.14.0",
   "description": "Miden Turnkey Integration SDK",
   "workspaces": [
     "packages/*",

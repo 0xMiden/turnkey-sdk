@@ -152,7 +152,7 @@ export async function createAccont(
   // check if account exists locally after the import attempt
   const existing = await midenClient.accounts.get(account.id());
   if (!existing) {
-    await midenClient.accounts.insert(account);
+    await midenClient.accounts.insert({ account });
   }
   await midenClient.sync();
   return account.id().toString();

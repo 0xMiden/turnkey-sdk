@@ -1,44 +1,59 @@
-import * as esbuild from "esbuild";
-import { glob } from "glob";
-import { writeFileSync } from "fs";
-import { join } from "path";
+import * as esbuild from 'esbuild';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { glob } from 'glob';
 
-const entryPoints = await glob("src/**/*.ts");
+const entryPoints = await glob('src/**/*.{ts,tsx,js,jsx}');
 
-// Build ESM
-await esbuild.build({
-  entryPoints,
-  outdir: "dist/esm",
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const distDir = path.resolve(__dirname, '../dist');
+const buildTargets = [
+  {
+    dir: 'esm',
+    format: 'esm',
+    packageJson: { type: 'module', sideEffects: false },
+    splitting: true
+  },
+  {
+    dir: 'cjs',
+    format: 'cjs',
+    packageJson: { type: 'commonjs' },
+    splitting: false
+  }
+];
+
+/** @type {Omit<import('esbuild').BuildOptions, 'format' | 'outdir' | 'splitting'>} */
+const sharedOptions = {
   bundle: false,
-  sourcemap: false,
-  minify: false,
-  format: "esm",
-  platform: "neutral",
-  target: "es2020",
-});
-
-// Write ESM package.json
-writeFileSync(
-  join("dist", "esm", "package.json"),
-  JSON.stringify({ type: "module" }, null, 2)
-);
-
-// Build CJS
-await esbuild.build({
+  write: true,
+  loader: {
+    '.json': 'text'
+  },
+  platform: 'browser',
   entryPoints,
-  outdir: "dist/cjs",
-  bundle: false,
-  sourcemap: false,
+  allowOverwrite: true,
   minify: false,
-  format: "cjs",
-  platform: "neutral",
-  target: "es2020",
-});
+  target: ['es2022'],
+  packages: 'external'
+};
 
-// Write CJS package.json
-writeFileSync(
-  join("dist", "cjs", "package.json"),
-  JSON.stringify({ type: "commonjs" }, null, 2)
-);
+for (const target of buildTargets) {
+  const outDir = path.join(distDir, target.dir);
+  await fs.mkdir(outDir, { recursive: true });
+  await fs.writeFile(
+    path.join(outDir, 'package.json'),
+    JSON.stringify(target.packageJson, null, 2)
+  );
 
-console.log("Build complete: dist/esm and dist/cjs");
+  /** @type {import('esbuild').BuildOptions} */
+  const buildOptions = {
+    ...sharedOptions,
+    format: target.format,
+    splitting: target.splitting,
+    outdir: outDir
+  };
+
+  await esbuild.build(buildOptions);
+}

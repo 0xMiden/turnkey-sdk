@@ -3,6 +3,10 @@
     "target": "es2020",
     "module": "esnext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@miden-sdk/miden-turnkey": ["../../src/index.ts"]
+    },
     "lib": ["ES2020", "DOM"],
     "jsx": "react-jsx",
     "declaration": true,

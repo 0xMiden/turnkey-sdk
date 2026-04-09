@@ -1,21 +1,33 @@
-import { mkdirSync, readdirSync, renameSync, existsSync } from "fs";
-import { join } from "path";
+import { mkdirSync, renameSync, existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { readFile } from 'fs/promises';
 
-const buildDir = "build";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '..');
 
-// Create build directory if it doesn't exist
-if (!existsSync(buildDir)) {
-  mkdirSync(buildDir, { recursive: true });
+const pkgRaw = await readFile(path.join(repoRoot, 'package.json'), 'utf8');
+const pkg = JSON.parse(pkgRaw);
+const tarballBase = pkg.name.replace(/^@/, '').replace(/\//g, '-');
+const tarballName = `${tarballBase}-${pkg.version}.tgz`;
+
+const sourcePath = path.join(repoRoot, tarballName);
+const destDir = path.join(repoRoot, 'build');
+const destPath = path.join(destDir, tarballName);
+
+mkdirSync(destDir, { recursive: true });
+
+if (existsSync(sourcePath)) {
+  renameSync(sourcePath, destPath);
+  console.log(`Moved ${tarballName} to ${path.relative(repoRoot, destDir)}/`);
+  process.exit(0);
 }
 
-// Find and move tarball to build directory
-const files = readdirSync(".");
-const tarball = files.find((f) => f.endsWith(".tgz"));
-
-if (tarball) {
-  const dest = join(buildDir, tarball);
-  renameSync(tarball, dest);
-  console.log(`Moved ${tarball} to ${dest}`);
-} else {
-  console.log("No tarball found to move");
+if (existsSync(destPath)) {
+  console.log(`${tarballName} already located in ${path.relative(repoRoot, destDir)}/`);
+  process.exit(0);
 }
+
+console.warn(
+  `Expected tarball ${tarballName} not found in project root or ${path.relative(repoRoot, destDir)}/; nothing to move.`,
+);

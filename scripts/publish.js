@@ -75,16 +75,13 @@ function hasScript(directory, scriptName) {
 }
 
 /**
- * Prepare a package.json for publishing:
- *   1. Strip the `publish` / `publish:dry` scripts so `npm publish` doesn't
- *      re-invoke this orchestrator via the `publish` lifecycle hook.
- *   2. For the workspace root, strip `private: true` and `workspaces` so npm
- *      will actually publish the package.
- *   3. Rewrite `link:` workspace deps (e.g. `"@miden-sdk/miden-turnkey": "link:../../"`)
- *      to a real semver range so the published tarball's metadata is usable.
- * We back up the original and restore it after `npm publish` completes.
+ * Strip script entries that would re-invoke this orchestrator as an npm
+ * lifecycle hook. npm runs the `publish` script in package.json as a lifecycle
+ * step during `npm publish`, so leaving it in place would recurse into this
+ * file. We back up the original, rewrite a filtered package.json, and restore
+ * once publish is done.
  */
-function prepareForPublish(directory) {
+function stripOrchestratorScripts(directory) {
   const packageJsonPath = path.resolve(directory, 'package.json');
   const original = fs.readFileSync(packageJsonPath, 'utf8');
   const pkg = JSON.parse(original);
@@ -99,33 +96,9 @@ function prepareForPublish(directory) {
     }
   }
 
-  if (pkg.private) {
-    delete pkg.private;
-    changed = true;
-  }
-  if (pkg.workspaces) {
-    delete pkg.workspaces;
-    changed = true;
-  }
-
-  for (const depType of ['dependencies', 'devDependencies', 'peerDependencies']) {
-    const deps = pkg[depType];
-    if (!deps) continue;
-    for (const [name, version] of Object.entries(deps)) {
-      if (typeof version === 'string' && version.startsWith('link:')) {
-        const realVersion = findWorkspacePackageVersion(name);
-        if (!realVersion) {
-          throw new Error(`Cannot resolve link: dependency "${name}" — package not found in workspace`);
-        }
-        deps[name] = `^${realVersion}`;
-        changed = true;
-      }
-    }
-  }
-
   if (changed) {
     fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
-    console.log(`Prepared package.json for publish in ${directory}`);
+    console.log(`Stripped orchestrator scripts from ${directory}/package.json`);
   }
 
   return { original, changed, packageJsonPath };
@@ -136,18 +109,6 @@ function restorePackageJson({ original, changed, packageJsonPath }) {
     fs.writeFileSync(packageJsonPath, original, 'utf8');
     console.log(`Restored original package.json in ${path.dirname(packageJsonPath)}`);
   }
-}
-
-function findWorkspacePackageVersion(packageName) {
-  for (const level of buildOrder) {
-    for (const dir of level) {
-      try {
-        const info = getPackageInfo(dir);
-        if (info.name === packageName) return info.version;
-      } catch (_) {}
-    }
-  }
-  return null;
 }
 
 function checkIfVersionExists(packageName, version) {
@@ -196,7 +157,15 @@ async function getOtp() {
   });
 }
 
-async function buildPackage(dir) {
+async function prepareAndBuild(dir) {
+  // Under yarn 4 workspaces the lockfile lives at the repo root and a single
+  // `yarn install --immutable` at root installs dependencies for every
+  // workspace, so we only run install when processing the root. Subsequent
+  // per-package iterations just need to run their build script.
+  if (path.resolve(dir) === repoRoot) {
+    await runCommand(dir, 'yarn install --immutable');
+  }
+
   if (hasScript(dir, 'build')) {
     await runCommand(dir, 'yarn build');
   } else {
@@ -220,24 +189,12 @@ async function publishPackages() {
 
   const isDryRun = process.argv.includes('--dry-run');
   const useOtp = process.argv.includes('--otp');
-  const skipInstall = process.argv.includes('--skip-install');
   console.log(
     isDryRun
       ? 'DRY RUN MODE - No packages will be actually published'
       : '🚀 LIVE MODE - Packages will be published to npm'
   );
   const otp = isDryRun ? null : useOtp ? await getOtp() : null;
-
-  // Yarn workspaces: a single install at the root hydrates all workspace
-  // packages' node_modules, so we do it once up front instead of per-package.
-  // --skip-install is an escape hatch for when the workspace's lockfile is
-  // temporarily broken and the user has already installed deps manually.
-  if (skipInstall) {
-    console.log('Skipping workspace install (--skip-install)');
-  } else {
-    console.log('Installing workspace dependencies...');
-    await runCommand(repoRoot, 'yarn install --frozen-lockfile');
-  }
 
   const packageUpdates = [];
 
@@ -258,9 +215,9 @@ async function publishPackages() {
         }
 
         console.log(`Building ${packageName}@${packageVersion}...`);
-        await buildPackage(dir);
+        await prepareAndBuild(dir);
 
-        const backup = prepareForPublish(dir);
+        const backup = stripOrchestratorScripts(dir);
         try {
           if (isDryRun) {
             console.log(`DRY RUN: Would publish ${packageName}@${packageVersion}`);

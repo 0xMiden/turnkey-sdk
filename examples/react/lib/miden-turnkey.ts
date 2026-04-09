@@ -1,13 +1,13 @@
 import { isHttpClient, TurnkeyActivityError } from "@turnkey/http";
 import type { MidenClientOpts, TConfig } from "./types";
+import type { MidenClient, AccountType, AccountStorageMode } from "@miden-sdk/miden-sdk";
 import {
   accountSeedFromStr,
   evmPkToCommitment,
-  fetchUncompressedPublicKey,
   fromTurnkeySig,
 } from "./utils";
 import type { v1SignRawPayloadResult } from "@turnkey/core";
-import { HandleSignMessageParams } from "@turnkey/react-wallet-kit";
+import type { HandleSignMessageParams } from "@turnkey/react-wallet-kit";
 
 const sign = async (
   messageHex: string,
@@ -84,39 +84,41 @@ function refineNonNull<T>(
 export async function createMidenTurnkeyClient(
   turnkeyConfig: TConfig,
   opts: MidenClientOpts = {},
-  type: import("@miden-sdk/miden-sdk").AccountType,
-  storageMode: import("@miden-sdk/miden-sdk").AccountStorageMode,
+  type: AccountType,
+  storageMode: AccountStorageMode,
   handleSign?: (
     message: Omit<HandleSignMessageParams, "walletAccount">
   ) => Promise<v1SignRawPayloadResult>
 ): Promise<{
-  client: import("@miden-sdk/miden-sdk").WebClient;
+  client: MidenClient;
   accountId: string;
 }> {
-  const { WebClient } = await import("@miden-sdk/miden-sdk");
-  const webClient = await WebClient.createClientWithExternalKeystore(
-    opts.endpoint,
-    opts.noteTransportUrl,
-    opts.seed,
-    undefined,
-    undefined,
-    undefined,
-    signCb(turnkeyConfig, handleSign)
-  );
+  const { MidenClient: MidenClientClass } = await import("@miden-sdk/miden-sdk");
+  const client = await MidenClientClass.create({
+    rpcUrl: opts.endpoint,
+    noteTransportUrl: opts.noteTransportUrl,
+    seed: opts.seed,
+    keystore: {
+      getKey: async () => undefined,
+      insertKey: async () => {},
+      sign: signCb(turnkeyConfig, handleSign),
+    },
+    autoSync: true,
+  });
   const accountId = await createAccont(
-    webClient,
+    client,
     type,
     storageMode,
     turnkeyConfig,
     opts
   );
-  return { client: webClient, accountId };
+  return { client, accountId };
 }
 
 export async function createAccont(
-  midenClient: import("@miden-sdk/miden-sdk").WebClient,
-  type: import("@miden-sdk/miden-sdk").AccountType,
-  storageMode: import("@miden-sdk/miden-sdk").AccountStorageMode,
+  midenClient: MidenClient,
+  type: AccountType,
+  storageMode: AccountStorageMode,
   config: TConfig,
   opts?: MidenClientOpts
 ) {
@@ -128,7 +130,7 @@ export async function createAccont(
     throw new Error("Failed to fetch uncompressed public key");
   }
 
-  await midenClient.syncState();
+  await midenClient.sync();
   const pkc = await evmPkToCommitment(compressedPublicKey);
   const { AccountBuilder, AccountComponent, AccountStorageMode } = await import(
     "@miden-sdk/miden-sdk"
@@ -146,20 +148,20 @@ export async function createAccont(
     .withBasicWalletComponent()
     .build().account;
   // If the account already exists on-chain (e.g. public/network), hydrate it instead of
-  // recreating a “new” account with zero commitment, which causes submission to fail.
+  // recreating a "new" account with zero commitment, which causes submission to fail.
   if (storageMode !== AccountStorageMode.private()) {
     try {
-      await midenClient.importAccountById(account.id());
+      await midenClient.accounts.import(account);
     } catch {
       // Import will fail for non-existent accounts; fall through to creation path.
     }
   }
 
   // check if account exists locally after the import attempt
-  const existing = await midenClient.getAccount(account.id());
+  const existing = await midenClient.accounts.get(account.id());
   if (!existing) {
-    await midenClient.newAccount(account, false);
+    await midenClient.accounts.insert({ account });
   }
-  await midenClient.syncState();
+  await midenClient.sync();
   return account.id().toString();
 }

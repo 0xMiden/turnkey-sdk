@@ -1,80 +1,41 @@
+import type { MidenClient } from "@miden-sdk/miden-sdk";
 import { toast } from "sonner";
 
 export async function send(
-  midenParaClient: import("@miden-sdk/miden-sdk").WebClient,
+  client: MidenClient,
   fromAccountId: string,
   toAddress: string,
   faucetId: string,
   amount: bigint
 ) {
-  const { Address, AccountId, NoteType } = await import(
-    "@miden-sdk/miden-sdk"
-  );
+  await client.sync();
+  const result = await client.transactions.send({
+    account: fromAccountId,
+    to: toAddress,
+    token: faucetId,
+    amount: amount * BigInt(1e8),
+    type: "private",
+    returnNote: true,
+  });
 
-  const toAddr = Address.fromBech32(toAddress);
-  const fromAddr = AccountId.fromHex(fromAccountId);
-  const from = await midenParaClient.getAccount(fromAddr);
-  if (!from) {
-    throw new Error("Sender account not found");
-  }
-  await midenParaClient.syncState();
-  const newSendTransactionRequestStart = performance.now();
-  const sendTxRequest = midenParaClient.newSendTransactionRequest(
-    from.id(),
-    toAddr.accountId(),
-    AccountId.fromHex(faucetId),
-    NoteType.Private,
-    amount * BigInt(1e8)
-  );
-  const newSendTransactionRequestTime =
-    performance.now() - newSendTransactionRequestStart;
-  const outputNote = sendTxRequest.expectedOutputOwnNotes()[0];
-  const executeStart = performance.now();
-  const executedTx = await midenParaClient.executeTransaction(
-    from.id(),
-    sendTxRequest
-  );
-  const executeTransactionTime = performance.now() - executeStart;
+  await client.notes.sendPrivate({
+    note: result.note,
+    to: toAddress,
+  });
 
-  const proveStart = performance.now();
-  const provenTx = await midenParaClient.proveTransaction(executedTx);
-  const proveTransactionTime = performance.now() - proveStart;
-
-  const submitStart = performance.now();
-  const submissionHeight = await midenParaClient.submitProvenTransaction(
-    provenTx,
-    executedTx
-  );
-  const submitProvenTransactionTime = performance.now() - submitStart;
-
-  await midenParaClient.applyTransaction(executedTx, submissionHeight);
-
-  await midenParaClient.sendPrivateNote(
-    outputNote,
-    Address.fromBech32(toAddress)
-  );
   toast.success("Transaction Completed", {
     description: `Sent Transaction of ${amount} MID to ${toAddress}`,
     action: {
       label: "View TX",
       onClick: () => {
         window.open(
-          `https://testnet.midenscan.com/tx/${executedTx
-            .executedTransaction()
-            .id()
-            .toHex()}`,
+          `https://testnet.midenscan.com/tx/${result.txId.toHex()}`,
           "_blank"
         );
       },
     },
   });
   return {
-    txHash: executedTx.executedTransaction().id().toHex(),
-    performance: {
-      executeTransactionTime,
-      proveTransactionTime,
-      submitProvenTransactionTime,
-      newSendTransactionRequestTime,
-    },
+    txHash: result.txId.toHex(),
   };
 }

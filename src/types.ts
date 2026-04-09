@@ -1,6 +1,8 @@
 import { TurnkeySDKClientBase, WalletAccount } from "@turnkey/core";
 import type { TurnkeyBrowserClient } from "@turnkey/sdk-browser";
 import type { TurnkeyClient } from "@turnkey/http";
+import type { AccountType, AccountStorageMode } from "@miden-sdk/miden-sdk";
+
 export type Turnkey =
   | TurnkeyClient
   | TurnkeyBrowserClient
@@ -29,6 +31,6 @@ export interface MidenClientOpts {
 }
 
 export interface MidenAccountOpts {
-  type: import("@miden-sdk/miden-sdk").AccountType;
-  storageMode: import("@miden-sdk/miden-sdk").AccountStorageMode;
+  type: AccountType;
+  storageMode: AccountStorageMode;
 }

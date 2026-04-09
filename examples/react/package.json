@@ -9,9 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@miden-sdk/miden-sdk": "^0.13.1",
-    "@miden-sdk/miden-turnkey": "^1.0.0",
-    "@miden-sdk/miden-turnkey-react": "^1.0.0",
+    "@miden-sdk/miden-sdk": "^0.14.0",
+    "@miden-sdk/miden-turnkey": "^1.14.0",
+    "@miden-sdk/miden-turnkey-react": "^1.14.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@turnkey/core": "^1.8.2",
     "@turnkey/http": "^3.15.0",

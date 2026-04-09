@@ -1,7 +1,7 @@
 {
   "name": "@miden-sdk/miden-turnkey",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.14.0",
   "description": "Miden Turnkey Integration SDK",
   "workspaces": [
     "packages/*",
@@ -20,7 +20,8 @@
   "scripts": {
     "test": "node --test tests",
     "build": "rm -rf dist && node scripts/build.mjs && tsc --emitDeclarationOnly --outDir dist/types",
-    "publish": "node scripts/publish.mjs",
+    "publish": "node scripts/publish.js",
+    "publish:dry": "node scripts/publish.js --dry-run",
     "prepack": "yarn build",
     "postpack": "node scripts/postpack.mjs"
   },
@@ -50,7 +51,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@miden-sdk/miden-sdk": "^0.13.1",
+    "@miden-sdk/miden-sdk": "^0.14.0",
     "@turnkey/core": "^1.8.2",
     "@turnkey/http": "^3.15.0",
     "@turnkey/sdk-browser": "^5.13.4"

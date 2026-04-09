@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { WebClient } from "@miden-sdk/miden-sdk";
+import type { MidenClient } from "@miden-sdk/miden-sdk";
 import type { Wallet } from "@turnkey/core";
 import type { ClientContextType } from "@turnkey/react-wallet-kit";
 import { useTurnkey } from "@turnkey/react-wallet-kit";
@@ -15,7 +15,7 @@ export interface UseTurnkeyMidenOpts {
 }
 
 export interface UseTurnkeyMidenResult {
-  client: WebClient | null;
+  client: MidenClient | null;
   accountId: string | null;
   turnkey: ClientContextType;
   embeddedWallets: Wallet[];
@@ -28,7 +28,7 @@ export function useTurnkeyMiden(
   storageMode: "public" | "private" = "public",
   opts: UseTurnkeyMidenOpts = {}
 ): UseTurnkeyMidenResult {
-  const [client, setClient] = useState<WebClient | null>(null);
+  const [client, setClient] = useState<MidenClient | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
 
   const turnkey = useTurnkey();

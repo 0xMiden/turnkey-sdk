@@ -31,6 +31,8 @@ export interface TurnkeySignerProviderProps {
     Partial<Omit<TurnkeySDKBrowserConfig, "defaultOrganizationId">>;
   /** Optional custom account components to include in the account (e.g. from a compiled .masp package) */
   customComponents?: SignerAccountConfig["customComponents"];
+  /** Optional account ID to import instead of creating a new account */
+  importAccountId?: string;
 }
 
 /**
@@ -85,6 +87,7 @@ export function TurnkeySignerProvider({
   children,
   config,
   customComponents,
+  importAccountId,
 }: TurnkeySignerProviderProps) {
   const resolvedConfig: TurnkeySDKBrowserConfig = {
     ...TURNKEY_DEFAULTS,
@@ -203,6 +206,7 @@ export function TurnkeySignerProvider({
               accountType: "RegularAccountImmutableCode",
               storageMode: AccountStorageMode.public(),
               ...(customComponents?.length ? { customComponents } : {}),
+              ...(importAccountId ? { importAccountId } : {}),
             },
             storeName: `turnkey_${account.address}`,
             name: "Turnkey",
@@ -233,7 +237,7 @@ export function TurnkeySignerProvider({
     return () => {
       cancelled = true;
     };
-  }, [isConnected, account, client, connect, disconnect]);
+  }, [isConnected, account, client, connect, disconnect, importAccountId]);
 
   // Extended extras context with setAccount
   const extrasValue = useMemo(

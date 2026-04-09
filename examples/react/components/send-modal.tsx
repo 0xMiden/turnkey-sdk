@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -19,12 +19,6 @@ interface SendModalProps {
     amount: string
   ) => Promise<{
     txHash: string;
-    performance: {
-      executeTransactionTime: number;
-      proveTransactionTime: number;
-      submitProvenTransactionTime: number;
-      newSendTransactionRequestTime: number;
-    };
   } | void>;
   onClose: () => void;
   accountId: string;
@@ -35,14 +29,9 @@ export function SendModal({ onSend, onClose, accountId }: SendModalProps) {
   const [faucetId, setFaucetId] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [performanceData, setPerformanceData] = useState<{
+  const [resultData, setResultData] = useState<{
     txHash: string;
-    performance: {
-      executeTransactionTime: number;
-      proveTransactionTime: number;
-      submitProvenTransactionTime: number;
-      newSendTransactionRequestTime: number;
-    };
+    elapsed: number;
   } | null>(null);
   const [faucetIdsAndBalance, setFaucetIdsAndBalance] = useState<
     {
@@ -62,10 +51,14 @@ export function SendModal({ onSend, onClose, accountId }: SendModalProps) {
     if (!toAddress || !faucetId || !amount) return;
 
     setLoading(true);
+    const start = performance.now();
     try {
       const result = await onSend(toAddress, faucetId, amount);
       if (result) {
-        setPerformanceData(result);
+        setResultData({
+          txHash: result.txHash,
+          elapsed: performance.now() - start,
+        });
       }
     } catch (error) {
       console.error("Send failed:", error);
@@ -147,7 +140,7 @@ export function SendModal({ onSend, onClose, accountId }: SendModalProps) {
             />
           </div>
 
-          {performanceData && (
+          {resultData && (
             <div className="border border-primary/30 bg-muted/30 p-4 space-y-3">
               <div className="text-xs font-mono text-primary uppercase tracking-wide flex items-center gap-2">
                 <div className="w-2 h-2 bg-primary animate-pulse" />
@@ -157,69 +150,22 @@ export function SendModal({ onSend, onClose, accountId }: SendModalProps) {
                 <div className="flex justify-between text-xs font-mono">
                   <span className="text-muted-foreground">TX Hash:</span>
                   <span className="text-primary break-all ml-2">
-                    {performanceData.txHash.slice(0, 12)}...
-                    {performanceData.txHash.slice(-8)}
+                    {resultData.txHash.slice(0, 12)}...
+                    {resultData.txHash.slice(-8)}
                   </span>
                 </div>
-                <div className="border-t border-border pt-2 space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">
-                      Build Request:
-                    </span>
-                    <span className="text-foreground">
-                      {performanceData.performance.newSendTransactionRequestTime.toFixed(
-                        2
-                      )}
-                      ms
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">Execute TX:</span>
-                    <span className="text-foreground">
-                      {performanceData.performance.executeTransactionTime.toFixed(
-                        2
-                      )}
-                      ms
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">Prove TX:</span>
-                    <span className="text-foreground">
-                      {performanceData.performance.proveTransactionTime.toFixed(
-                        2
-                      )}
-                      ms
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">Submit TX:</span>
-                    <span className="text-foreground">
-                      {performanceData.performance.submitProvenTransactionTime.toFixed(
-                        2
-                      )}
-                      ms
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs font-mono border-t border-primary/20 pt-1.5 mt-1.5">
-                    <span className="text-primary">Total:</span>
-                    <span className="text-primary font-bold">
-                      {(
-                        performanceData.performance
-                          .newSendTransactionRequestTime +
-                        performanceData.performance.executeTransactionTime +
-                        performanceData.performance.proveTransactionTime +
-                        performanceData.performance.submitProvenTransactionTime
-                      ).toFixed(2)}
-                      ms
-                    </span>
-                  </div>
+                <div className="flex justify-between text-xs font-mono border-t border-primary/20 pt-1.5 mt-1.5">
+                  <span className="text-primary">Total Time:</span>
+                  <span className="text-primary font-bold">
+                    {resultData.elapsed.toFixed(2)} ms
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
-            {!performanceData ? (
+            {!resultData ? (
               <>
                 <ActionButton
                   onClick={handleSend}

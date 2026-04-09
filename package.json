@@ -20,7 +20,8 @@
   "scripts": {
     "test": "node --test tests",
     "build": "rm -rf dist && node scripts/build.mjs && tsc --emitDeclarationOnly --outDir dist/types",
-    "publish": "node scripts/publish.mjs",
+    "publish": "node scripts/publish.js",
+    "publish:dry": "node scripts/publish.js --dry-run",
     "prepack": "yarn build",
     "postpack": "node scripts/postpack.mjs"
   },

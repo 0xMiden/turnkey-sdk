@@ -2,14 +2,19 @@
   "name": "@miden-sdk/miden-turnkey-react",
   "version": "1.14.1",
   "description": "React hook for Miden Turnkey integration",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./lazy": {
+      "types": "./dist/lazy.d.ts",
+      "import": "./dist/lazy.js",
+      "require": "./dist/lazy.cjs"
     }
   },
   "scripts": {

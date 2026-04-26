@@ -5,7 +5,8 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@miden-sdk/miden-turnkey": ["../../src/index.ts"]
+      "@miden-sdk/miden-turnkey": ["../../src/index.ts"],
+      "@miden-sdk/miden-turnkey/lazy": ["../../src/index.ts"]
     },
     "lib": ["ES2020", "DOM"],
     "jsx": "react-jsx",

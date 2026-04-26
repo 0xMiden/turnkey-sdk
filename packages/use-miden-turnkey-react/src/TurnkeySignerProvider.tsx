@@ -18,8 +18,8 @@ import {
   SignerContext,
   type SignerContextValue,
   type SignerAccountConfig,
-} from "@miden-sdk/react";
-import { evmPkToCommitment, fromTurnkeySig } from "@miden-sdk/miden-turnkey";
+} from "@miden-sdk/react/lazy";
+import { evmPkToCommitment, fromTurnkeySig } from "@miden-sdk/miden-turnkey/lazy";
 
 // TURNKEY SIGNER PROVIDER
 // ================================================================================================
@@ -82,7 +82,7 @@ async function signBytesWithTurnkey(
   client: TurnkeyBrowserClient,
   account: WalletAccount,
 ): Promise<Uint8Array> {
-  const { SigningInputs, Word } = await import("@miden-sdk/miden-sdk");
+  const { SigningInputs, Word } = await import("@miden-sdk/miden-sdk/lazy");
   const word: any =
     kind === "word"
       ? Word.deserialize(data)
@@ -213,7 +213,7 @@ export function TurnkeySignerProvider({
 
         const signCb = async (_: Uint8Array, signingInputs: Uint8Array) => {
           if (!client) throw new Error("Turnkey client not available");
-          const { SigningInputs } = await import("@miden-sdk/miden-sdk");
+          const { SigningInputs } = await import("@miden-sdk/miden-sdk/lazy");
           const inputs = SigningInputs.deserialize(signingInputs);
           const messageHex = inputs.toCommitment().toHex();
 
@@ -222,7 +222,7 @@ export function TurnkeySignerProvider({
         };
 
         if (!cancelled) {
-          const { AccountStorageMode } = await import("@miden-sdk/miden-sdk");
+          const { AccountStorageMode } = await import("@miden-sdk/miden-sdk/lazy");
 
           // Pattern B: arbitrary-byte signing for `useSignBytes`. Turnkey can
           // sign any payload — we just generalize signWithTurnkey for both

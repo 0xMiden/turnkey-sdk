@@ -8,7 +8,7 @@ import type {
   MidenClient,
   AccountType,
   AccountStorageMode,
-} from "@miden-sdk/miden-sdk";
+} from "@miden-sdk/miden-sdk/lazy";
 import {
   accountSeedFromStr,
   evmPkToCommitment,
@@ -62,7 +62,7 @@ const sign = async (
 
 const signCb = (turnkeyConfig: TConfig) => {
   return async (_: Uint8Array, signingInputs: Uint8Array) => {
-    const { SigningInputs } = await import("@miden-sdk/miden-sdk");
+    const { SigningInputs } = await import("@miden-sdk/miden-sdk/lazy");
     const deSigningInputs = SigningInputs.deserialize(signingInputs);
     const message = deSigningInputs.toCommitment().toHex();
     const sig = await sign(message, turnkeyConfig);
@@ -88,7 +88,7 @@ export async function createMidenTurnkeyClient(
   client: MidenClient;
   accountId: string;
 }> {
-  const { MidenClient: MidenClientClass } = await import("@miden-sdk/miden-sdk");
+  const { MidenClient: MidenClientClass } = await import("@miden-sdk/miden-sdk/lazy");
   const client = await MidenClientClass.create({
     rpcUrl: opts.endpoint,
     noteTransportUrl: opts.noteTransportUrl,
@@ -125,7 +125,7 @@ export async function createAccont(
   await midenClient.sync();
   const pkc = await evmPkToCommitment(compressedPublicKey);
   const { AccountBuilder, AccountComponent, AccountStorageMode } = await import(
-    "@miden-sdk/miden-sdk"
+    "@miden-sdk/miden-sdk/lazy"
   );
   const accountBuilder = new AccountBuilder(
     accountSeedFromStr(opts?.accountSeed) ?? new Uint8Array(32).fill(0)

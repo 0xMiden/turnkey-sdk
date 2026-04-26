@@ -49,7 +49,7 @@ export function isValidUuid(s: string): boolean {
 }
 
 export const evmPkToCommitment = async (compressedPk: string) => {
-  const { Felt, Rpo256, FeltArray } = await import("@miden-sdk/miden-sdk");
+  const { Felt, Rpo256, FeltArray } = await import("@miden-sdk/miden-sdk/lazy");
   const bytes = hexToBytes(compressedPk);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 

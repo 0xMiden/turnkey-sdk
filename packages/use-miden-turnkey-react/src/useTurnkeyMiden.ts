@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { MidenClient } from "@miden-sdk/miden-sdk";
+import type { MidenClient } from "@miden-sdk/miden-sdk/lazy";
 import type { Wallet } from "@turnkey/core";
 import type { ClientContextType } from "@turnkey/react-wallet-kit";
 import { useTurnkey } from "@turnkey/react-wallet-kit";
-import { createMidenTurnkeyClient } from "@miden-sdk/miden-turnkey";
+import { createMidenTurnkeyClient } from "@miden-sdk/miden-turnkey/lazy";
 
 export interface UseTurnkeyMidenOpts {
   accountSeed?: string;
@@ -60,7 +60,7 @@ export function useTurnkeyMiden(
     let mounted = true;
     const loadClient = async () => {
       const { AccountType, AccountStorageMode } = await import(
-        "@miden-sdk/miden-sdk"
+        "@miden-sdk/miden-sdk/lazy"
       );
 
       const accountStorageMode =

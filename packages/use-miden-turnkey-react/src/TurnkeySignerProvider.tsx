@@ -67,6 +67,31 @@ async function signWithTurnkey(
 }
 
 /**
+ * Pattern B: arbitrary-byte signing for `useSignBytes`.
+ *
+ * Same shape as Para's `signBytes`:
+ *   - 'word'         → bytes ARE a serialized 32-byte Miden Word.
+ *   - 'signingInputs' → extract the commitment Word via `inputs.toCommitment()`.
+ * Both kinds: the Word's hex is sent to Turnkey with KECCAK256 (server-side
+ * hashing), matching the wallet's `Vault.signData` semantics. Verified
+ * against `~/miden/miden-wallet/src/lib/miden/back/vault.ts:476-500`.
+ */
+async function signBytesWithTurnkey(
+  data: Uint8Array,
+  kind: "word" | "signingInputs",
+  client: TurnkeyBrowserClient,
+  account: WalletAccount,
+): Promise<Uint8Array> {
+  const { SigningInputs, Word } = await import("@miden-sdk/miden-sdk");
+  const word: any =
+    kind === "word"
+      ? Word.deserialize(data)
+      : SigningInputs.deserialize(data).toCommitment();
+  const sig = await signWithTurnkey(word.toHex(), client, account);
+  return fromTurnkeySig(sig);
+}
+
+/**
  * TurnkeySignerProvider wraps MidenProvider to enable Turnkey wallet signing.
  * Constructs a TurnkeyBrowserClient internally from the provided config.
  *
@@ -199,8 +224,20 @@ export function TurnkeySignerProvider({
         if (!cancelled) {
           const { AccountStorageMode } = await import("@miden-sdk/miden-sdk");
 
+          // Pattern B: arbitrary-byte signing for `useSignBytes`. Turnkey can
+          // sign any payload — we just generalize signWithTurnkey for both
+          // `kind` values and route them through the same KECCAK256 path.
+          const signBytes = async (
+            data: Uint8Array,
+            kind: "word" | "signingInputs"
+          ) => {
+            if (!client) throw new Error("Turnkey client not available");
+            return signBytesWithTurnkey(data, kind, client, account);
+          };
+
           setSignerContext({
             signCb,
+            signBytes,
             accountConfig: {
               publicKeyCommitment: commitmentBytes,
               accountType: "RegularAccountImmutableCode",
